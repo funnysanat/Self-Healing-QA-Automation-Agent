@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Checkout</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 50px; background: #f4f4f5; }
+        .checkout-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+        .btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; }
+        .btn:hover { background: #2563eb; }
+        #message { margin-top: 20px; color: green; font-weight: bold; display: none; }
+    </style>
+</head>
+<body>
+    <div class="checkout-box">
+        <h2>Your Cart</h2>
+        <p>Total: $99.00</p>
+        <button id="proceed-payment" class="btn">Proceed to Payment</button>
+        <div id="message">Payment Successful!</div>
+    </div>
+    <script>
+        document.getElementById('proceed-payment').addEventListener('click', function() {
+            document.getElementById('message').style.display = 'block';
+        });
+    </script>
+</body>
+</html>

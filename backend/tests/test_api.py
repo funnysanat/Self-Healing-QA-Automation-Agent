@@ -6,7 +6,7 @@ def run_test(api_file_path):
         data = json.load(f)
         
     assert "status" in data, "API should return a status field"
-    assert "transaction_id" in data, "API should return a transaction_id for the checkout"
+    assert "order_ref" in data, "API should return an order_ref for the checkout"
     assert "message" in data, "API should return a message field"
     print("API test passed successfully!")
 

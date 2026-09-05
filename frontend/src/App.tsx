@@ -147,6 +147,7 @@ function App() {
                 <div className="flex gap-4 mb-6">
                   <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.ui === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>UI: {metrics.ui}</div>
                   <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.api === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>API: {metrics.api}</div>
+                  <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.logs === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>Logs: {metrics.logs}</div>
                   <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.security === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>Security: {metrics.security}</div>
                   <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.accessibility === 'WARN' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>A11y: {metrics.accessibility}</div>
                   <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.performance.includes('PASS') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>Perf: {metrics.performance}</div>
@@ -163,6 +164,7 @@ function App() {
                     status === 'FAIL' ? 'bg-red-100 text-red-800 border-red-300' :
                     status === 'AI Healing...' ? 'bg-yellow-100 text-yellow-800 border-yellow-300 animate-pulse' :
                     status === 'HEALED' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                    status === 'DIAGNOSED' ? 'bg-purple-100 text-purple-800 border-purple-300' :
                     'bg-gray-200 text-gray-800'
                   } border`}>
                     Status: {status}

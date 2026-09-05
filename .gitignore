@@ -5,3 +5,14 @@ __pycache__/
 .DS_Store
 dist/
 build/
+
+# Ignore images, markdown, and pdfs
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.md
+*.pdf
+*.rtfd/
+*.docx

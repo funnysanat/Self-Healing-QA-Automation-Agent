@@ -1,0 +1,5 @@
+{
+  "status": "success",
+  "transaction_id": 12345,
+  "message": "Payment processed successfully"
+}

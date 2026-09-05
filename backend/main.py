@@ -30,6 +30,8 @@ class GenerateTestRequest(BaseModel):
     description: str
 
 TEST_SCRIPT_PATH = "tests/test_checkout.py"
+API_SCRIPT_PATH = "tests/test_api.py"
+PERF_SCRIPT_PATH = "tests/test_perf.py"
 
 @app.post("/run-test")
 def run_test(request: RunTestRequest):
@@ -37,22 +39,39 @@ def run_test(request: RunTestRequest):
     
     # Run the test in a subprocess to capture output
     try:
-        result = subprocess.run(
+        ui_result = subprocess.run(
             ["python", TEST_SCRIPT_PATH, url],
             capture_output=True,
             text=True,
             timeout=10
         )
         
+        api_file = os.path.abspath(f"../demo-app/api_{request.version}.json")
+        api_result = subprocess.run(
+            ["python", API_SCRIPT_PATH, api_file],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        
+        perf_result = subprocess.run(
+            ["python", PERF_SCRIPT_PATH, url],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        
+        perf_time = perf_result.stdout.strip().replace("Elapsed: ", "") if perf_result.stdout else "N/A"
+        
         metrics = {
-            "api": "PASS",
+            "api": "PASS" if api_result.returncode == 0 else "FAIL",
             "security": "PASS",
-            "performance": "PASS"
+            "performance": f"PASS ({perf_time})" if perf_result.returncode == 0 else f"FAIL ({perf_time})",
+            "ui": "PASS" if ui_result.returncode == 0 else "FAIL",
+            "accessibility": "WARN"
         }
         
-        if result.returncode == 0:
-            metrics["ui"] = "PASS"
-            metrics["accessibility"] = "WARN"
+        if ui_result.returncode == 0 and api_result.returncode == 0 and perf_result.returncode == 0:
             return {
                 "status": "PASS", 
                 "metrics": metrics,
@@ -60,11 +79,17 @@ def run_test(request: RunTestRequest):
                 "decision": "🟢 PASS"
             }
         else:
-            metrics["ui"] = "FAIL"
-            metrics["accessibility"] = "WARN"
+            error_msg = ""
+            if ui_result.returncode != 0:
+                error_msg += f"UI_ERROR: {ui_result.stderr}\n"
+            if api_result.returncode != 0:
+                error_msg += f"API_ERROR: {api_result.stderr}\n"
+            if perf_result.returncode != 0:
+                error_msg += f"PERF_ERROR: {perf_result.stderr}\n"
+                
             return {
                 "status": "FAIL", 
-                "error": result.stderr,
+                "error": error_msg,
                 "metrics": metrics,
                 "risk": "HIGH",
                 "decision": "🔴 BLOCK"
@@ -74,44 +99,57 @@ def run_test(request: RunTestRequest):
 
 @app.post("/heal-test")
 def heal_test(request: HealTestRequest):
-    # For a hackathon, we can either mock this or use Gemini if the key is provided
     api_key = os.environ.get("GEMINI_API_KEY")
+    is_api_error = "API_ERROR:" in request.error_message
+    is_perf_error = "PERF_ERROR:" in request.error_message
     
-    with open(TEST_SCRIPT_PATH, "r") as f:
+    if is_perf_error:
+        # Performance regressions shouldn't be healed via LLM modifying code blindly for the demo
+        return {
+            "status": "HEALED", 
+            "diagnosis": "Diagnosed Performance Regression: Response time exceeded SLA. Recommendation: Profile database queries.", 
+            "decision": "BLOCK" # Keep it blocked as it needs human intervention
+        }
+    
+    script_path = API_SCRIPT_PATH if is_api_error else TEST_SCRIPT_PATH
+    
+    with open(script_path, "r") as f:
         test_script = f.read()
         
-    with open(f"../demo-app/{request.version}.html", "r") as f:
-        new_dom = f.read()
-        
-    if not api_key or api_key == "your_gemini_api_key_here":
-        # Mock self-healing logic for the demo if no API key is provided
-        print("No GEMINI_API_KEY found, using mock healing...")
-        new_script = test_script.replace("#checkout", "#proceed-payment")
-        with open(TEST_SCRIPT_PATH, "w") as f:
-            f.write(new_script)
-        
-        return {
-            "status": "HEALED",
-            "diagnosis": "Detected UI change: #checkout -> #proceed-payment. Confidence: 96%",
-            "decision": "PASS"
-        }
-        
-    # Actual LLM Logic
-    try:
-        llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0, google_api_key=api_key)
-        prompt = PromptTemplate.from_template(
-            "You are an AI QA Engineer. A Playwright test just failed.\n"
+    if is_api_error:
+        with open(f"../demo-app/api_{request.version}.json", "r") as f:
+            context_data = f.read()
+        prompt_text = (
+            "You are an AI QA Engineer. An API contract test just failed.\n"
             "Error: {error}\n\n"
-            "Here is the new DOM of the page:\n{dom}\n\n"
-            "Here is the current test script:\n{script}\n\n"
+            "Here is the new JSON response from the API:\n{context}\n\n"
+            "Here is the current python test script:\n{script}\n\n"
+            "Update the test script to assert the correct field names based on the new JSON response. "
+            "Output ONLY the new python script code, without markdown formatting or explanation."
+        )
+    else:
+        with open(f"../demo-app/{request.version}.html", "r") as f:
+            context_data = f.read()
+        prompt_text = (
+            "You are an AI QA Engineer. A Playwright UI test just failed.\n"
+            "Error: {error}\n\n"
+            "Here is the new DOM of the page:\n{context}\n\n"
+            "Here is the current python test script:\n{script}\n\n"
             "Identify the new CSS selector for the checkout button and rewrite the script. "
             "Output ONLY the new python script code, without markdown formatting or explanation."
         )
+
+    if not api_key or api_key == "your_gemini_api_key_here":
+        return {"status": "HEALED", "diagnosis": "Mock healed.", "decision": "PASS"}
         
+    try:
+        llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0, google_api_key=api_key)
+        prompt = PromptTemplate.from_template(prompt_text)
         chain = prompt | llm
+        
         response = chain.invoke({
             "error": request.error_message,
-            "dom": new_dom,
+            "context": context_data,
             "script": test_script
         })
         
@@ -123,12 +161,12 @@ def heal_test(request: HealTestRequest):
         if new_script.startswith("```python"):
             new_script = new_script.split("```python")[1].split("```")[0].strip()
             
-        with open(TEST_SCRIPT_PATH, "w") as f:
+        with open(script_path, "w") as f:
             f.write(new_script)
             
         return {
             "status": "HEALED",
-            "diagnosis": "AI successfully identified the new element and updated the test script.",
+            "diagnosis": f"AI successfully identified the new {'API schema' if is_api_error else 'DOM element'} and updated the test script.",
             "decision": "PASS"
         }
     except Exception as e:

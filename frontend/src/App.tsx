@@ -149,7 +149,7 @@ function App() {
                   <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.api === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>API: {metrics.api}</div>
                   <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.security === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>Security: {metrics.security}</div>
                   <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.accessibility === 'WARN' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>A11y: {metrics.accessibility}</div>
-                  <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.performance === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>Perf: {metrics.performance}</div>
+                  <div className={`px-3 py-1 rounded text-sm font-bold ${metrics.performance.includes('PASS') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>Perf: {metrics.performance}</div>
                 </div>
               )}
             </div>

@@ -1,0 +1,5 @@
+{
+  "status": "success",
+  "order_ref": "ORD-12345",
+  "message": "Payment processed successfully"
+}

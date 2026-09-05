@@ -7,7 +7,7 @@ def run_test(url: str):
         page.goto(url)
         
         # Click the checkout button
-        page.click('#checkout', timeout=3000)
+        page.click('#proceed-payment', timeout=3000)
         
         # Verify success message
         message = page.locator('#message')

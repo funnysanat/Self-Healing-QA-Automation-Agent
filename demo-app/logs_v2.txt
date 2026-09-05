@@ -1,0 +1,10 @@
+2026-09-05 10:00:01 [INFO] Starting Application Server
+2026-09-05 10:00:02 [INFO] Connected to PostgreSQL Database (prod-db)
+2026-09-05 10:01:45 [INFO] Request received: GET /checkout
+2026-09-05 10:01:45 [INFO] Rendering checkout template
+2026-09-05 10:01:50 [ERROR] ConnectionError: Database connection timeout when trying to read from table 'inventory'.
+Traceback (most recent call last):
+  File "db.py", line 42, in fetch_inventory
+    conn.execute("SELECT * FROM inventory")
+TimeoutError: Query execution exceeded 5000ms.
+2026-09-05 10:01:50 [INFO] Request completed: GET /checkout (500 Internal Server Error) - 5010ms

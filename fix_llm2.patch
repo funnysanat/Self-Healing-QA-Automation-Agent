@@ -1,0 +1,22 @@
+--- backend/main.py
++++ backend/main.py
+@@ -194,7 +194,7 @@
+         return {"status": "HEALED", "diagnosis": "Mock healed.", "decision": "PASS"}
+         
+     try:
+-        llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0, google_api_key=api_key)
++        llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0, google_api_key=api_key, max_retries=0)
+         prompt = PromptTemplate.from_template(prompt_text)
+         chain = prompt | llm
+         
+@@ -218,5 +218,9 @@
+             "decision": "PASS"
+         }
+     except Exception as e:
+-        raise HTTPException(status_code=500, detail=str(e))
++        return {
++            "status": "FAIL",
++            "diagnosis": "API Rate Limit Exceeded: The Google Gemini free tier limit was hit. Please wait a minute or upgrade to a paid tier.",
++            "decision": "BLOCK"
++        }
+ 

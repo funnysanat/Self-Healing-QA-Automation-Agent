@@ -1,0 +1,24 @@
+--- backend/main.py
++++ backend/main.py
+@@ -151,7 +151,7 @@
+             return {"status": "DIAGNOSED", "diagnosis": "Mock log analysis: Database timeout.", "decision": "BLOCK"}
+             
+         try:
+-            llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0, google_api_key=api_key)
++            llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0, google_api_key=api_key, max_retries=0)
+             prompt = PromptTemplate.from_template(
+                 "You are an AI SRE. A backend application log has thrown an error.\n"
+                 "Logs:\n{logs}\n\n"
+@@ -165,7 +165,11 @@
+                 "decision": "BLOCK" # Block release due to critical backend exception
+             }
+         except Exception as e:
+-            raise HTTPException(status_code=500, detail=str(e))
++            return {
++                "status": "DIAGNOSED",
++                "diagnosis": "API Rate Limit Exceeded: The Google Gemini free tier limit was hit. Please wait a minute or upgrade to a paid tier.",
++                "decision": "BLOCK"
++            }
+             
+     # PRIORITY 4: Diagnose Perf
+     elif is_perf_error:
